@@ -1,0 +1,8 @@
+Flask>=3.0
+flask-sock>=0.7
+SQLAlchemy>=2.0
+PyMySQL>=1.1
+requests>=2.31
+PySocks>=1.7
+filelock>=3.13
+pyTelegramBotAPI>=4.14
