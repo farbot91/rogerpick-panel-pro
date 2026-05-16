@@ -1,47 +1,69 @@
-# Offline Ubuntu 24 Bundle
+﻿# Rogerpick Panel Pro
 
-Offline-ready deployment bundle for the Telegram bot, web panel, and Xray-based proxy bootstrap flow.
+Rogerpick Panel Pro یک راهکار کامل برای فروش، مدیریت و پشتیبانی اشتراک‌های V2Ray/3x-ui است که هم‌زمان شامل ربات تلگرام، وب‌پنل مدیریتی، و مسیر نصب آفلاین روی Ubuntu 24 می‌شود.
 
-## What is included
+این پروژه برای محیط‌های عملیاتی طراحی شده و فقط یک اسکریپت ساده نیست؛ از مدیریت کاربران و کیف پول تا بکاپ/ریستور سرورها و مدیریت مسیر پروکسی تلگرام را پوشش می‌دهد.
 
-- Telegram bot
-- Web admin panel
-- Setup wizard for first-time installation
-- Offline Python wheels
-- Xray runtime and helper scripts
+## قابلیت‌های اصلی
 
-## Quick start
+- ربات تلگرام با منوی کامل کاربری و ادمین
+- ساخت، تمدید و حذف سرویس کاربر
+- خرید گروهی، شارژ کیف پول و انتقال اعتبار بین کاربران
+- نمایش تعرفه‌ها و آمار مصرف سرویس‌ها
+- تعیین رمز ورود وب توسط کاربر از داخل ربات
+- وب‌پنل ادمین با ورود `chat_id + password`
+- تعریف نقش‌ها: کاربر عادی، ادمین، ادمین اصلی
+- مدیریت سرورهای 3x-ui (افزودن، جایگزینی، حذف، ری‌استارت Xray)
+- بکاپ‌گیری از سرورها و ریستور بکاپ
+- پیام همگانی و پیام مستقیم به کاربران از پنل
+- مدیریت تنظیمات پنل، قیمت‌ها، ادمین‌ها و وضعیت فروش
+- صفحه اشتراک عمومی (`/s/<sub_link>`) برای نمایش اطلاعات سرویس
+- نصب و اجرا در حالت آفلاین با بسته‌های `wheels/`
+- پشتیبانی از پروکسی تلگرام مبتنی بر Xray به‌صورت جدا از ارتباطات 3x-ui
+
+## معماری پروژه
+
+- `project/bot.py`: منطق ربات تلگرام و جریان‌های تعاملی
+- `project/web_panel.py`: وب‌پنل مدیریت، APIها و عملیات ادمین
+- `project/config.py`: منطق اصلی تنظیمات/هماهنگی با دیتابیس و سرورها
+- `project/database.py`: مدل‌های دیتابیس و اسکیما
+- `project/networking.py`: جداسازی مسیر شبکه تلگرام و درخواست‌های مستقیم
+- `setup_wizard.py`: ویزارد راه‌اندازی اولیه از طریق وب
+
+## مسیر نصب آفلاین (Ubuntu 24)
+
+اسناد کامل نصب و اجرا در فایل‌های زیر قرار دارد:
+
+- `README_OFFLINE_UBUNTU24.md`
+- `SERVER_RUN_COMMANDS.md`
+
+شروع سریع:
 
 ```bash
 chmod +x setup.sh
 SETUP_PORT=18080 ./setup.sh
 ```
 
-Then open:
+سپس در مرورگر:
 
 ```text
 http://SERVER_IP:18080
 ```
 
-## Setup flow
+## نکات مهم امنیتی
 
-The setup wizard is designed to:
+- فایل تنظیمات واقعی `project/web_panel_settings.json` در گیت ignore شده و نباید commit شود.
+- نمونه عمومی تنظیمات در `project/web_panel_settings.example.json` قرار دارد.
+- دیتابیس محلی، لاگ‌ها، runtime و رسیدهای پرداخت در گیت track نمی‌شوند.
+- قبل از انتشار، توکن‌های واقعی تلگرام باید تعویض/بازتولید شوند.
 
-- collect bot and admin settings
-- accept Telegram proxy input as raw JSON or `vless://...`
-- normalize proxy config automatically
-- test proxy reachability
-- prepare runtime settings
-- start the services
+## وضعیت عملیاتی
 
-## Important files
+این مخزن به‌عنوان یک باندل عملیاتی نگهداری می‌شود و شامل ابزارهای لازم برای:
 
-- `README_OFFLINE_UBUNTU24.md` - detailed offline installation notes
-- `SERVER_RUN_COMMANDS.md` - common service commands
-- `RELEASE_CHECKLIST.md` - pre-release and pre-push checklist
-- `project/web_panel_settings.example.json` - example settings template
+- استقرار اولیه
+- نگهداری روزانه
+- عیب‌یابی
+- مدیریت سرویس کاربران
 
-## Notes
-
-- Runtime data, local database files, logs, and real settings are ignored by Git.
-- Use the example settings file as the public template, not local production settings.
+است.
