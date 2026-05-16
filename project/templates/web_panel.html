@@ -1,0 +1,1103 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>پنل وب 3x-ui Pro Panel Devaloper Rogerpick</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='web_panel.css') }}">
+</head>
+<body>
+  <button class="menu-toggle" type="button" data-sidebar-toggle aria-label="باز کردن منو">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+  <div class="sidebar-overlay" data-sidebar-close></div>
+  <aside class="sidebar">
+    <nav>
+      <a class="{{ 'active' if view == 'dashboard' else '' }}" href="{{ url_for('dashboard') }}">حساب من</a>
+      {% if current and current.is_admin %}
+        <a class="{{ 'active' if view == 'admin' else '' }}" href="{{ url_for('admin') }}">مدیریت</a>
+      {% endif %}
+      <a href="{{ settings.support_link }}" target="_blank" rel="noreferrer">پشتیبانی</a>
+    </nav>
+    <div class="sidebar-foot">
+      <a class="sidebar-exit" href="{{ url_for('logout') }}">خروج</a>
+    </div>
+  </aside>
+
+  <main class="main-shell">
+    <header class="topbar">
+      <div class="network-visual" aria-hidden="true">
+        <span class="node n1"></span>
+        <span class="node n2"></span>
+        <span class="node n3"></span>
+        <span class="node n4"></span>
+        <span class="node n5"></span>
+        <i class="line l1"></i>
+        <i class="line l2"></i>
+        <i class="line l3"></i>
+        <i class="line l4"></i>
+      </div>
+      <div class="equalizer-visual" aria-hidden="true">
+        <span style="--i:1"></span>
+        <span style="--i:2"></span>
+        <span style="--i:3"></span>
+        <span style="--i:4"></span>
+        <span style="--i:5"></span>
+        <span style="--i:6"></span>
+        <span style="--i:7"></span>
+        <span style="--i:8"></span>
+        <span style="--i:9"></span>
+        <span style="--i:10"></span>
+        <span style="--i:11"></span>
+        <span style="--i:12"></span>
+      </div>
+    </header>
+
+    {% if web_banner_path %}
+      <section class="global-banner">
+        <img src="{{ url_for('static', filename=web_banner_path) }}" alt="بنر پنل">
+      </section>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-stack">
+          {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% if view == 'dashboard' %}
+      <section class="metric-row">
+        <article class="metric">
+          <span>موجودی</span>
+          <strong>{{ user.balance }}</strong>
+          <small>گیگابایت</small>
+        </article>
+        <article class="metric">
+          <span>کانفیگ‌ها</span>
+          <strong>{{ subscriptions|length }}</strong>
+          <small>فعال و غیرفعال</small>
+        </article>
+        <article class="metric">
+          <span>رفرال</span>
+          <strong>{{ settings.referral_percent }}%</strong>
+          <small>تا {{ settings.referral_rate }} گیگ</small>
+        </article>
+      </section>
+
+      <section class="action-grid">
+        <form class="panel" method="post" action="{{ url_for('create_subscription_route') }}">
+          <h2>ساخت کانفیگ</h2>
+          <label><span>نام انگلیسی</span><input name="name" required></label>
+          <label><span>حجم</span><input name="gigabytes" inputmode="numeric" required></label>
+          <button class="primary">ساخت</button>
+        </form>
+
+        <form class="panel" method="post" action="{{ url_for('extend_subscription_route') }}">
+          <h2>تمدید کانفیگ</h2>
+          <label><span>لینک یا کد کانفیگ</span><input name="sub_link" required></label>
+          <label><span>حجم افزایشی</span><input name="gigabytes" inputmode="numeric" required></label>
+          <button class="primary">تمدید</button>
+        </form>
+
+        <form class="panel" method="post" action="{{ url_for('transfer_route') }}">
+          <h2>انتقال اعتبار</h2>
+          <label><span>آیدی مقصد</span><input name="destination_tg_id" inputmode="numeric" required></label>
+          <label><span>حجم</span><input name="gigabytes" inputmode="numeric" required></label>
+          <button class="secondary">انتقال</button>
+        </form>
+
+        <form class="panel" method="post" action="{{ url_for('charge_route') }}" enctype="multipart/form-data" data-charge-form data-pricing-mode="{{ settings.pricing_mode or 'range' }}" data-price-ranges="{{ settings.ranges|tojson|forceescape }}" data-price-values="{{ settings.prices|tojson|forceescape }}" data-fixed-prices="{{ (settings.fixed_prices or {})|tojson|forceescape }}">
+          <h2>افزایش موجودی</h2>
+          <label><span>حجم درخواستی</span><input name="gigabytes" inputmode="numeric" required data-charge-gigabytes></label>
+          <label><span>روش پرداخت</span>
+            <select name="payment_method">
+              <option value="card">کارت به کارت</option>
+              <option value="crypto">ارز دیجیتال</option>
+            </select>
+          </label>
+          <label><span>ارز دیجیتال</span>
+            <select name="crypto_asset" data-crypto-asset>
+              <option value="bnb">BNB</option>
+              <option value="trx">TRX</option>
+              <option value="usdt_trc20">USDT TRC20</option>
+              <option value="usdt_bep20">USDT BEP20</option>
+            </select>
+          </label>
+          <label><span>رسید یا کد پیگیری</span><input name="proof"></label>
+          <label><span>تصویر رسید کارت به کارت</span><input type="file" name="receipt_image" accept="image/png,image/jpeg,image/webp"></label>
+          <p class="hint">شماره کارت: {{ settings.card_num }}</p>
+          <div class="crypto-rate-list" data-crypto-rates>
+            {% for key, label in crypto_asset_labels.items() %}
+              <div class="crypto-rate" data-crypto-rate="{{ key }}">
+                <b>{{ label }}</b>
+                <span>{{ settings.crypto_wallets[key] if settings.crypto_wallets else '' }}</span>
+                <small data-rate-value>قیمت: {% if crypto_prices.prices.get(key) %}{{ "{:,.0f}".format(crypto_prices.prices.get(key)) }} ریال{% else %}در حال دریافت{% endif %}</small>
+              </div>
+            {% endfor %}
+          </div>
+          <div class="crypto-quote" data-crypto-quote>برای محاسبه مقدار ارز، حجم و نوع ارز را انتخاب کنید.</div>
+          <button class="secondary">ثبت برای تایید</button>
+        </form>
+      </section>
+
+      <section class="table-panel">
+        <div class="section-head">
+          <h2>کانفیگ‌های من</h2>
+          <form method="post" action="{{ url_for('delete_subscription_route') }}" class="inline-form">
+            <input name="sub_link" placeholder="لینک برای حذف" required>
+            <button class="danger">حذف</button>
+          </form>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>نام</th>
+                <th>لینک</th>
+                <th>حجم</th>
+                <th>آپلود</th>
+                <th>دانلود</th>
+                <th>باقی‌مانده</th>
+                <th>وضعیت</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in subscriptions %}
+                {% set sub = row.subscription %}
+                <tr>
+                  <td>{{ sub.name }}</td>
+                  <td><a href="{{ url_for('public_subscription', sub_link=sub.link) }}" target="_blank">{{ sub.link }}</a></td>
+                  <td>{{ sub.gigabytes }}</td>
+                  <td>{{ "%.2f"|format(row.up) }}</td>
+                  <td>{{ "%.2f"|format(row.down) }}</td>
+                  <td>{{ "%.2f"|format(row.remain) }}</td>
+                  <td><span class="status {{ 'ok' if sub.is_active else 'off' }}">{{ 'فعال' if sub.is_active else 'غیرفعال' }}</span></td>
+                </tr>
+              {% else %}
+                <tr><td colspan="7" class="empty">هنوز کانفیگی ساخته نشده است.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="table-panel">
+        <h2>درخواست‌های شارژ</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>حجم</th><th>قیمت</th><th>رسید</th><th>وضعیت</th></tr></thead>
+            <tbody>
+              {% for item in waitlist %}
+                <tr>
+                  <td>{{ item.gigabytes }}</td>
+                  <td>{{ item.price }}</td>
+                  <td>
+                    {{ item.message }}
+                    {% if item.receipt_image_path %}
+                      <a class="receipt-link" href="{{ url_for('static', filename=item.receipt_image_path) }}" target="_blank">مشاهده تصویر رسید</a>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if item.status == 'approved' %}
+                      <span class="status ok">تایید شده</span>
+                    {% elif item.status == 'rejected' %}
+                      <span class="status off">رد شده</span>
+                    {% else %}
+                      <span class="status pending">در انتظار بررسی</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% else %}
+                <tr><td colspan="4" class="empty">درخواستی ثبت نشده است.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="table-panel">
+        <h2>تاریخچه انتقال اعتبار</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>زمان</th><th>از</th><th>به</th><th>حجم</th></tr></thead>
+            <tbody>
+              {% for item in transfer_history %}
+                <tr>
+                  <td>{{ item.created_at or '-' }}</td>
+                  <td>{{ item.source_tg_id }}</td>
+                  <td>{{ item.destination_tg_id }}</td>
+                  <td>{{ item.gigabytes }} گیگ</td>
+                </tr>
+              {% else %}
+                <tr><td colspan="4" class="empty">انتقال اعتباری ثبت نشده است.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    {% endif %}
+
+    {% if view == 'admin' %}
+      <nav class="admin-tabs">
+        <a class="{{ 'active' if admin_tab == 'settings' else '' }}" href="{{ url_for('admin', tab='settings') }}">تنظیمات پنل</a>
+        <a class="{{ 'active' if admin_tab == 'finance' else '' }}" href="{{ url_for('admin', tab='finance') }}">امور مالی</a>
+        <a class="{{ 'active' if admin_tab == 'users' else '' }}" href="{{ url_for('admin', tab='users') }}">کاربران و ادمین‌ها</a>
+        <a class="{{ 'active' if admin_tab == 'payments' else '' }}" href="{{ url_for('admin', tab='payments') }}">پرداخت‌ها و پیام‌ها</a>
+        <a class="{{ 'active' if admin_tab == 'servers' else '' }}" href="{{ url_for('admin', tab='servers') }}">سرورها</a>
+        <a class="{{ 'active' if admin_tab == 'reports' else '' }}" href="{{ url_for('admin', tab='reports') }}">گزارش‌ها</a>
+      </nav>
+
+      {% if admin_tab == 'settings' %}
+      <section class="action-grid admin-actions admin-tab-panel">
+        <form class="panel wide settings-panel" method="post" action="{{ url_for('admin_settings') }}">
+          <input type="hidden" name="admin_tab" value="settings">
+          <h2>تنظیمات پنل</h2>
+          <label><span>دامنه بات</span><input name="bot_domain" value="{{ settings.bot_domain }}"></label>
+          <label><span>پشتیبانی</span><input name="support_link" value="{{ settings.support_link }}"></label>
+          <label><span>پروکسی تلگرام</span><input name="telegram_proxy_url" value="{{ settings.telegram_proxy_url }}" placeholder="socks5h://127.0.0.1:9050"></label>
+          <label><span>کانال پرداخت</span><input name="payment_channel_chat_id" value="{{ settings.payment_channel_chat_id }}"></label>
+          <label class="full"><span>کد دو مرحله‌ای 3x-ui</span><input name="xui_two_factor_code" value="{{ settings.xui_two_factor_code }}"></label>
+          <label class="full"><span>کانال‌های اجباری</span><textarea name="channels">{{ settings.channels|join('\n') }}</textarea></label>
+          <button class="primary">ذخیره تنظیمات</button>
+        </form>
+
+        <form class="panel wide settings-panel" method="post" action="{{ url_for('admin_telegram_proxy_config') }}">
+          <h2>پیکربندی پروکسی تلگرام</h2>
+          <label class="full">
+            <span>کانفیگ JSON Xray/V2Ray</span>
+            <textarea name="telegram_xray_config_json" dir="ltr" spellcheck="false" placeholder='vless://... یا {"outbounds":[...]}' required>{{ telegram_xray_config_text or '' }}</textarea>
+          </label>
+          <p class="hint">ورودی خام JSON یا لینک VLESS را وارد کنید. پنل آن را به ساختار داخلی تلگرام تبدیل می‌کند، Host لازم برای WS را کامل می‌کند، Xray را ری‌استارت می‌کند، پروکسی را تست می‌کند و IP سالم Telegram API را خودش پیدا و ذخیره می‌کند.</p>
+          <button class="primary">ذخیره، تبدیل و راه‌اندازی خودکار پروکسی تلگرام</button>
+        </form>
+
+        <form class="panel banner-panel" method="post" action="{{ url_for('admin_web_banner') }}" enctype="multipart/form-data">
+          <h2>بنر سراسری پنل</h2>
+          {% if web_banner_path %}
+            <img class="banner-preview" src="{{ url_for('static', filename=web_banner_path) }}" alt="بنر فعلی">
+          {% endif %}
+          <label><span>تصویر بنر</span><input type="file" name="web_banner" accept="image/png,image/jpeg,image/webp" required></label>
+          <button class="secondary">ذخیره بنر</button>
+        </form>
+        <article class="panel operation-panel">
+          <h2>وضعیت فروش</h2>
+          <div class="state-line">
+            <span class="status {{ 'ok' if bot_sales_enabled else 'off' }}">{{ 'روشن' if bot_sales_enabled else 'خاموش' }}</span>
+          </div>
+          <form method="post" action="{{ url_for('admin_bot_status') }}">
+            <input type="hidden" name="enabled" value="{{ '0' if bot_sales_enabled else '1' }}">
+            <button class="{{ 'danger' if bot_sales_enabled else 'primary' }}">{{ 'خاموش کردن فروش' if bot_sales_enabled else 'روشن کردن فروش' }}</button>
+          </form>
+        </article>
+      </section>
+      {% endif %}
+
+      {% if admin_tab == 'finance' %}
+      <section class="action-grid admin-actions admin-tab-panel">
+        <form class="panel wide settings-panel" method="post" action="{{ url_for('admin_settings') }}">
+          <input type="hidden" name="admin_tab" value="finance">
+          <h2>امور مالی</h2>
+          <label><span>شماره کارت</span><input name="card_num" value="{{ settings.card_num }}"></label>
+          <label><span>BNB wallet</span><input name="crypto_wallet_bnb" value="{{ settings.crypto_wallets.bnb if settings.crypto_wallets else '' }}"></label>
+          <label><span>TRX wallet</span><input name="crypto_wallet_trx" value="{{ settings.crypto_wallets.trx if settings.crypto_wallets else '' }}"></label>
+          <label><span>USDT TRC20 wallet</span><input name="crypto_wallet_usdt_trc20" value="{{ settings.crypto_wallets.usdt_trc20 if settings.crypto_wallets else '' }}"></label>
+          <label><span>USDT BEP20 wallet</span><input name="crypto_wallet_usdt_bep20" value="{{ settings.crypto_wallets.usdt_bep20 if settings.crypto_wallets else '' }}"></label>
+          <label><span>حالت قیمت‌گذاری</span>
+            <select name="pricing_mode">
+              <option value="range" {{ 'selected' if (settings.pricing_mode or 'range') == 'range' else '' }}>رنجی</option>
+              <option value="fixed" {{ 'selected' if settings.pricing_mode == 'fixed' else '' }}>لیست ثابت</option>
+            </select>
+          </label>
+          <label><span>رنج‌ها</span><input name="ranges" value="{{ settings.ranges|join(' ') }}"></label>
+          <label><span>قیمت هر گیگ در رنج‌ها</span><input name="prices" value="{{ settings.prices|join(' ') }}"></label>
+          <label class="full"><span>لیست قیمت ثابت</span><textarea name="fixed_prices" placeholder="1 GB = 350000&#10;2 GB = 750000&#10;10 GB = 3500000">{{ fixed_prices_text }}</textarea></label>
+          <button class="primary">ذخیره امور مالی</button>
+        </form>
+      </section>
+
+      <section class="table-panel">
+        <h2>صف پرداخت</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>کاربر</th><th>حجم</th><th>قیمت</th><th>رسید</th><th>وضعیت</th><th>عملیات</th></tr></thead>
+            <tbody>
+              {% for item in waitlist %}
+                <tr>
+                  <td>{{ item.user_id }}</td>
+                  <td>{{ item.gigabytes }}</td>
+                  <td>{{ item.price }}</td>
+                  <td>
+                    {{ item.message }}
+                    {% if item.receipt_image_path %}
+                      <a class="receipt-link" href="{{ url_for('static', filename=item.receipt_image_path) }}" target="_blank">مشاهده تصویر رسید</a>
+                    {% endif %}
+                  </td>
+                  <td><span class="status pending">در انتظار بررسی</span></td>
+                  <td class="row-actions">
+                    <form method="post" action="{{ url_for('approve_waitlist_route', waitlist_id=item.id) }}"><button class="primary small">تایید</button></form>
+                    <form method="post" action="{{ url_for('deny_waitlist_route', waitlist_id=item.id) }}"><button class="danger small">رد</button></form>
+                  </td>
+                </tr>
+              {% else %}
+                <tr><td colspan="6" class="empty">صف پرداخت خالی است.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="table-panel">
+        <h2>تاریخچه پرداخت‌ها</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>کاربر</th><th>حجم</th><th>قیمت</th><th>رسید</th><th>وضعیت</th><th>زمان بررسی</th></tr></thead>
+            <tbody>
+              {% for item in payment_history %}
+                <tr>
+                  <td>{{ item.user_id }}</td>
+                  <td>{{ item.gigabytes }}</td>
+                  <td>{{ item.price }}</td>
+                  <td>
+                    {{ item.message }}
+                    {% if item.receipt_image_path %}
+                      <a class="receipt-link" href="{{ url_for('static', filename=item.receipt_image_path) }}" target="_blank">مشاهده تصویر رسید</a>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if item.status == 'approved' %}
+                      <span class="status ok">تایید شده</span>
+                    {% else %}
+                      <span class="status off">رد شده</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ item.reviewed_at or '-' }}</td>
+                </tr>
+              {% else %}
+                <tr><td colspan="6" class="empty">تاریخچه پرداختی وجود ندارد.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      {% endif %}
+
+      {% if admin_tab == 'users' %}
+      <section class="action-grid admin-actions admin-tab-panel">
+        <form class="panel" method="post" action="{{ url_for('admin_set_balance') }}">
+          <h2>تغییر موجودی کاربر</h2>
+          <label><span>آیدی عددی</span><input name="tg_id" inputmode="numeric" required></label>
+          <label><span>موجودی جدید</span><input name="balance" inputmode="numeric" required></label>
+          <button class="primary">ثبت</button>
+        </form>
+
+        <form class="panel" method="post" action="{{ url_for('admin_block_user') }}">
+          <input type="hidden" name="admin_tab" value="users">
+          <h2>مسدود کردن کاربر</h2>
+          <label><span>آیدی عددی کاربر</span><input name="tg_id" inputmode="numeric" required></label>
+          <button class="danger">مسدود کردن</button>
+        </form>
+
+        <article class="panel">
+          <h2>مدیریت ادمین‌ها</h2>
+          {% if visible_admin_chat_ids %}
+            <p class="hint">ادمین‌ها: {{ visible_admin_chat_ids|join('، ') }}</p>
+          {% endif %}
+          <form method="post" action="{{ url_for('admin_add_admin') }}">
+            <label><span>چت‌آیدی ادمین جدید</span><input name="admin_tg_id" inputmode="numeric" required></label>
+            <button class="primary">اضافه کردن ادمین</button>
+          </form>
+          <form method="post" action="{{ url_for('admin_remove_admin') }}">
+            <label><span>چت‌آیدی برای حذف</span><input name="admin_tg_id" inputmode="numeric" required></label>
+            <button class="danger">حذف ادمین</button>
+          </form>
+        </article>
+      </section>
+
+      {% endif %}
+
+      {% if admin_tab == 'payments' %}
+      <section class="operation-grid admin-tab-panel">
+        <form class="panel operation-panel" method="post" action="{{ url_for('admin_backup_servers') }}">
+          <h2>بکاپ سرورها</h2>
+          <p class="hint">از همه سرورهای متصل درخواست بکاپ 3x-ui گرفته می‌شود.</p>
+          <button class="secondary">گرفتن بکاپ</button>
+        </form>
+
+        <form class="panel operation-panel" method="post" action="{{ url_for('admin_restore_server_backup') }}" enctype="multipart/form-data">
+          <h2>بارگذاری بکاپ</h2>
+          <label class="full"><span>فایل بکاپ JSON</span><input type="file" name="backup_file" accept=".json,application/json" required></label>
+          <button class="secondary">بارگذاری روی سرور</button>
+        </form>
+
+        <form class="panel operation-panel" method="post" action="{{ url_for('admin_broadcast') }}">
+          <h2>پیام همگانی</h2>
+          <label class="full"><span>متن پیام</span><textarea name="message" required></textarea></label>
+          <button class="primary">ارسال به کاربران</button>
+        </form>
+
+        <form class="panel operation-panel" method="post" action="{{ url_for('admin_message_user') }}">
+          <h2>پیام به کاربر</h2>
+          <label><span>آیدی عددی کاربر</span><input name="tg_id" inputmode="numeric" required></label>
+          <label class="full"><span>متن پیام</span><textarea name="message" required></textarea></label>
+          <button class="primary">ارسال پیام</button>
+        </form>
+
+        <form class="panel operation-panel" method="post" action="{{ url_for('admin_self_balance') }}">
+          <h2>افزایش موجودی من</h2>
+          <label><span>حجم افزایشی</span><input name="gigabytes" inputmode="numeric" required></label>
+          <button class="secondary">افزایش موجودی</button>
+        </form>
+      </section>
+      {% endif %}
+
+      {% if admin_tab == 'servers' %}
+      <section class="table-panel">
+        <div class="section-head">
+          <h2>سرورها</h2>
+        </div>
+        <h3 class="form-title">ثبت سرور جدید</h3>
+        <form class="server-form" method="post" action="{{ url_for('admin_add_server') }}">
+          <div class="form-group full">
+            <h4>اتصال به پنل 3x-ui</h4>
+            <p>آدرس پنل باید همان آدرسی باشد که API پنل روی آن لاگین می‌کند.</p>
+          </div>
+          <label><span>آدرس پنل</span><input name="domain" placeholder="http://1.2.3.4:2053" required><small>با http یا https و پورت پنل وارد شود.</small></label>
+          <label><span>یوزرنیم پنل</span><input name="username" autocomplete="off" required></label>
+          <label><span>پسورد پنل</span><input name="password" type="password" autocomplete="new-password" required></label>
+          <label><span>برچسب کشور</span><input name="country" placeholder="DE یا Germany" required><small>در ابتدای نام کانفیگ کاربر نمایش داده می‌شود.</small></label>
+          <label><span>پورت inbound</span><input name="port" placeholder="برای inbound موجود خودکار خوانده می‌شود" inputmode="numeric"><small>برای ساخت inbound جدید اجباری است؛ برای inbound موجود از 3x-ui خوانده می‌شود.</small></label>
+          <div class="form-group full inbound-picker" data-inbound-picker>
+            <h4>انتخاب inbound</h4>
+            <p>اگر سرور inbound آماده داشته باشد، دکمه بررسی را بزنید و از لیست انتخاب کنید. اگر سرور خالی است، حالت ساخت inbound جدید را بگذارید.</p>
+            <div class="choice-row">
+              <label class="check-line"><input type="radio" name="inbound_mode" value="existing"> اتصال به inbound موجود</label>
+              <label class="check-line"><input type="radio" name="inbound_mode" value="create" checked> ساخت inbound جدید</label>
+              <button class="secondary small" type="button" data-discover-inbounds>بررسی inboundهای سرور</button>
+            </div>
+            <select name="existing_inbound_id" data-inbound-select disabled>
+              <option value="">اول سرور را بررسی کنید</option>
+            </select>
+            <p class="muted-line" data-inbound-message>برای اتصال بدون خطا به inbound موجود، تنظیمات از خود 3x-ui خوانده و ذخیره می‌شود.</p>
+          </div>
+          <label><span>Inbound ID</span><input name="inbound_id" placeholder="0" value="0" inputmode="numeric"><small>در حالت عادی لازم نیست دستی وارد شود؛ برای ساخت جدید 0 بماند.</small></label>
+
+          <div class="form-group full">
+            <h4>نوع کانفیگ</h4>
+            <p>برای حالت‌های ساده، همین گزینه‌ها کافی است. برای Reality، gRPC یا تنظیمات خاص، JSON را از 3x-ui کپی کنید.</p>
+          </div>
+          <label><span>پروتکل</span><select name="protocol">
+              <option value="vless">VLESS</option>
+              <option value="vmess">VMESS</option>
+              <option value="trojan">Trojan</option>
+              <option value="shadowsocks">Shadowsocks</option>
+              <option value="shadowsocks2022">Shadowsocks 2022</option>
+              <option value="dokodemo-door">Dokodemo-door</option>
+              <option value="socks">Socks</option>
+              <option value="http">HTTP</option>
+              <option value="wireguard">WireGuard</option>
+              <option value="mixed">Mixed</option>
+            </select></label>
+          <label><span>شبکه</span><select name="network">
+              <option value="tcp">TCP</option>
+              <option value="ws">WebSocket</option>
+              <option value="grpc">gRPC</option>
+              <option value="http">HTTP/2</option>
+              <option value="httpupgrade">HTTP Upgrade</option>
+              <option value="splithttp">SplitHTTP</option>
+              <option value="kcp">mKCP</option>
+              <option value="quic">QUIC</option>
+            </select></label>
+          <label><span>امنیت</span><select name="security">
+              <option value="none">None / بدون TLS</option>
+              <option value="tls">TLS</option>
+              <option value="reality">Reality</option>
+            </select><small>اگر None باشد، فیلدهای TLS را روی -1 بگذارید.</small></label>
+
+          <div class="form-group full">
+            <h4>TLS و certificate</h4>
+            <p>اگر TLS ندارید، هر چهار مقدار را همان <b>-1</b> بگذارید. اگر TLS دارید، مسیر certificate و key باید روی خود سرور 3x-ui معتبر باشد.</p>
+          </div>
+          <label><span>SNI</span><input name="sni" placeholder="example.com یا -1" value="-1"><small>دامنه‌ای که کلاینت در TLS/SNI ارسال می‌کند.</small></label>
+          <label><span>دامنه certificate</span><input name="domain_name" placeholder="example.com یا -1" value="-1"><small>نام دامنه داخل تنظیمات TLS پنل.</small></label>
+          <label><span>مسیر certificate</span><input name="pub_key" placeholder="/root/cert/fullchain.pem یا -1" value="-1"><small>مسیر فایل public certificate روی سرور.</small></label>
+          <label><span>مسیر private key</span><input name="private_key" placeholder="/root/cert/privkey.pem یا -1" value="-1"><small>مسیر فایل private key روی سرور.</small></label>
+
+          <div class="form-group full">
+            <h4>تنظیمات پیشرفته 3x-ui</h4>
+            <p>برای Reality، gRPC، WebSocket host/path، SplitHTTP و templateهای خاص، JSONهای همین بخش را از inbound پنل 3x-ui کپی کنید.</p>
+          </div>
+          <label class="json-field"><span>settings JSON</span><textarea name="inbound_settings_json" placeholder='{"clients":[],"decryption":"none","fallbacks":[]}'></textarea><small>اختیاری؛ اگر خالی باشد مقدار استاندارد ساخته می‌شود.</small></label>
+          <label class="json-field"><span>streamSettings JSON</span><textarea name="stream_settings_json" placeholder='{"network":"grpc","security":"reality", ...}'></textarea><small>برای Reality/gRPC/WS سفارشی مهم‌ترین فیلد همین است.</small></label>
+          <label class="json-field"><span>sniffing JSON</span><textarea name="sniffing_json" placeholder='{"enabled":true,"destOverride":["http","tls","quic"]}'></textarea></label>
+          <label class="json-field"><span>client template JSON</span><textarea name="client_template_json" placeholder='{"id":"{uuid}","email":"{email}","enable":true}'></textarea><small>placeholderها: {uuid}, {password}, {email}, {enable}, {now}</small></label>
+          <button class="primary">ثبت سرور</button>
+        </form>
+        <h3 class="form-title">جایگزینی سرور</h3>
+        <form class="server-form replace-form" method="post" action="{{ url_for('admin_replace_server') }}">
+          <div class="form-group full">
+            <h4>انتخاب و مقصد جایگزینی</h4>
+            <p>همه کانفیگ‌های روی سرور قبلی به سرور جدید منتقل می‌شوند و لینک کاربران به‌روزرسانی می‌شود.</p>
+          </div>
+          <label class="full"><span>سرور قبلی</span><select name="old_server_id" required>
+              <option value="">انتخاب سرور برای جایگزینی</option>
+              {% for server in servers %}
+                <option value="{{ server.id }}">{{ server.id }} - {{ server.country }} - {{ server.domain }}</option>
+              {% endfor %}
+            </select><small>مصرف ثبت‌شده‌ی کلاینت‌های قدیمی قبل از انتقال ذخیره می‌شود.</small></label>
+          <label><span>آدرس پنل جدید</span><input name="domain" placeholder="http://1.2.3.4:2053" required></label>
+          <label><span>یوزرنیم جدید</span><input name="username" autocomplete="off" required></label>
+          <label><span>پسورد جدید</span><input name="password" type="password" autocomplete="new-password" required></label>
+          <label><span>برچسب کشور جدید</span><input name="country" placeholder="DE" required></label>
+          <label><span>پورت inbound جدید</span><input name="port" placeholder="443" inputmode="numeric" required></label>
+          <label><span>Inbound ID جدید</span><input name="inbound_id" placeholder="0" value="0" inputmode="numeric" required><small>0 یعنی inbound تازه روی سرور جدید ساخته شود.</small></label>
+
+          <div class="form-group full">
+            <h4>نوع کانفیگ جدید</h4>
+            <p>این تنظیمات باید با سرور مقصد سازگار باشند؛ در حالت‌های پیچیده، streamSettings را از 3x-ui کپی کنید.</p>
+          </div>
+          <label><span>پروتکل</span><select name="protocol">
+              <option value="vless">VLESS</option>
+              <option value="vmess">VMESS</option>
+              <option value="trojan">Trojan</option>
+              <option value="shadowsocks">Shadowsocks</option>
+              <option value="shadowsocks2022">Shadowsocks 2022</option>
+            </select></label>
+          <label><span>شبکه</span><select name="network">
+              <option value="tcp">TCP</option>
+              <option value="ws">WebSocket</option>
+              <option value="grpc">gRPC</option>
+              <option value="http">HTTP/2</option>
+              <option value="httpupgrade">HTTP Upgrade</option>
+              <option value="splithttp">SplitHTTP</option>
+            </select></label>
+          <label><span>امنیت</span><select name="security">
+              <option value="none">None / بدون TLS</option>
+              <option value="tls">TLS</option>
+              <option value="reality">Reality</option>
+            </select></label>
+
+          <div class="form-group full">
+            <h4>TLS و certificate جدید</h4>
+            <p>اگر مقصد TLS ندارد، این چهار فیلد را <b>-1</b> بگذارید. برای Reality معمولاً باید streamSettings کامل را وارد کنید.</p>
+          </div>
+          <label><span>SNI</span><input name="sni" placeholder="example.com یا -1" value="-1"></label>
+          <label><span>دامنه certificate</span><input name="domain_name" placeholder="example.com یا -1" value="-1"></label>
+          <label><span>مسیر certificate</span><input name="pub_key" placeholder="/root/cert/fullchain.pem یا -1" value="-1"></label>
+          <label><span>مسیر private key</span><input name="private_key" placeholder="/root/cert/privkey.pem یا -1" value="-1"></label>
+
+          <div class="form-group full">
+            <h4>JSONهای پیشرفته مقصد</h4>
+            <p>فقط وقتی لازم است که inbound مقصد تنظیمات خاص دارد یا می‌خواهید دقیقاً مثل پنل 3x-ui ساخته شود.</p>
+          </div>
+          <label class="json-field"><span>settings JSON</span><textarea name="inbound_settings_json" placeholder="اختیاری"></textarea></label>
+          <label class="json-field"><span>streamSettings JSON</span><textarea name="stream_settings_json" placeholder="برای Reality/gRPC/WS سفارشی"></textarea></label>
+          <label class="json-field"><span>sniffing JSON</span><textarea name="sniffing_json" placeholder="اختیاری"></textarea></label>
+          <label class="json-field"><span>client template JSON</span><textarea name="client_template_json" placeholder="اختیاری"></textarea></label>
+          <label class="check-line">
+            <input type="checkbox" name="cleanup_old_inbound" value="1" checked>
+            <span>حذف inbound قدیمی بعد از جایگزینی موفق</span>
+          </label>
+          <button class="danger">جایگزینی سرور</button>
+        </form>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>دامنه</th><th>کشور</th><th>منابع</th><th>شبکه</th><th>Xray</th><th>Inbound</th><th></th></tr></thead>
+            <tbody>
+              {% for server in servers %}
+                {% set status = server_status.get(server.id) if server_status is defined else None %}
+                <tr data-server-row="{{ server.id }}">
+                  <td>{{ server.id }}</td>
+                  <td>
+                    <strong>{{ server.domain }}</strong>
+                    <small class="muted-line">{{ server.protocol or ('vless' if server.is_vless else 'vmess') }} / {{ server.network or ('tcp' if server.is_tcp else 'ws') }} / {{ server.security or ('none' if server.sni == '-1' else 'tls') }} / {{ server.port }}</small>
+                  </td>
+                  <td>{{ server.country }}</td>
+                  <td data-status-cell="resources">
+                    {% if status and status.ok %}
+                      <div class="resource-stack">
+                        <div class="resource-meter" data-metric="cpu"><span>CPU</span><meter min="0" max="100" value="{{ status.cpu }}"></meter><b>{{ "%.0f"|format(status.cpu) }}%</b></div>
+                        <div class="resource-meter" data-metric="mem"><span>RAM</span><meter min="0" max="100" value="{{ status.mem_percent }}"></meter><b>{{ "%.0f"|format(status.mem_percent) }}%</b></div>
+                        <div class="resource-meter" data-metric="disk"><span>Disk</span><meter min="0" max="100" value="{{ status.disk_percent }}"></meter><b>{{ "%.0f"|format(status.disk_percent) }}%</b></div>
+                      </div>
+                      <small class="muted-line" data-resource-detail>RAM {{ "%.1f"|format(status.mem_current) }}/{{ "%.1f"|format(status.mem_total) }} GiB · Disk {{ "%.1f"|format(status.disk_current) }}/{{ "%.1f"|format(status.disk_total) }} GiB</small>
+                    {% else %}
+                      <span class="status off">عدم اتصال</span>
+                    {% endif %}
+                  </td>
+                  <td data-status-cell="network">
+                    {% if status and status.ok %}
+                      <span data-net-up>Up {{ "%.3f"|format(status.net_up) }} GiB</span>
+                      <small class="muted-line" data-net-down>Down {{ "%.3f"|format(status.net_down) }} GiB</small>
+                      <small class="muted-line" data-net-total>Total {{ "%.1f"|format(status.traffic_up) }} / {{ "%.1f"|format(status.traffic_down) }} GiB</small>
+                    {% else %}
+                      <small class="muted-line">نامشخص</small>
+                    {% endif %}
+                  </td>
+                  <td data-status-cell="xray">
+                    {% if status and status.ok %}
+                      <span class="status {{ 'ok' if status.xray_state else 'off' }}" data-xray-state>{{ 'روشن' if status.xray_state else 'خاموش' }}</span>
+                      <small class="muted-line" data-xray-version>{{ status.xray_version or '-' }}</small>
+                      {% if status.auto_restart_triggered %}
+                        <small class="muted-line">Auto restart اجرا شد</small>
+                      {% elif status.auto_restart_waiting %}
+                        <small class="muted-line">Auto restart در cooldown است</small>
+                      {% endif %}
+                      <div class="xray-actions">
+                        <form method="post" action="{{ url_for('admin_restart_xray', server_id=server.id) }}">
+                          <button class="secondary small" type="submit">ریست دستی</button>
+                        </form>
+                        <form method="post" action="{{ url_for('admin_toggle_xray_auto_restart', server_id=server.id) }}">
+                          <input type="hidden" name="enabled" value="{{ '0' if status.auto_restart_enabled else '1' }}">
+                          <button class="{{ 'primary' if status.auto_restart_enabled else 'secondary' }} small" type="submit">
+                            {{ 'اتوماتیک روشن' if status.auto_restart_enabled else 'اتوماتیک خاموش' }}
+                          </button>
+                        </form>
+                      </div>
+                      <small class="muted-line">Auto: CPU &gt; {{ status.auto_restart_threshold }}%</small>
+                    {% else %}
+                      <small class="muted-line">نامشخص</small>
+                    {% endif %}
+                  </td>
+                  <td>{{ server.inbound_id }}</td>
+                  <td>
+                    <form method="post" action="{{ url_for('admin_delete_server', server_id=server.id) }}">
+                      <button class="danger small">حذف</button>
+                    </form>
+                  </td>
+                </tr>
+              {% else %}
+                <tr><td colspan="8" class="empty">سروری ثبت نشده است.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      {% endif %}
+
+      {% if admin_tab == 'users_old_hidden' %}
+      <section class="table-panel">
+        <h2>کاربران</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>آیدی تلگرام</th><th>موجودی</th><th>رفرال</th><th>تعداد کانفیگ</th><th>وضعیت</th><th>عملیات</th></tr></thead>
+            <tbody>
+              {% for item in users %}
+                <tr>
+                  <td>{{ item.tg_id }}</td>
+                  <td>{{ item.balance }}</td>
+                  <td>{{ item.purchases }}</td>
+                  <td>{{ item.subscriptions|length }}</td>
+                  <td><span class="status {{ 'off' if item.is_blocked else 'ok' }}">{{ 'مسدود' if item.is_blocked else 'فعال' }}</span></td>
+                  <td class="row-actions">
+                    {% if not item.is_blocked %}
+                      <form method="post" action="{{ url_for('admin_block_user') }}">
+                        <input type="hidden" name="admin_tab" value="reports">
+                        <input type="hidden" name="tg_id" value="{{ item.tg_id }}">
+                        <button class="danger small">مسدود</button>
+                      </form>
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                </tr>
+              {% else %}
+                <tr><td colspan="6" class="empty">کاربری وجود ندارد.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      {% endif %}
+
+      {% if admin_tab == 'reports' %}
+      <section class="operation-grid admin-tab-panel">
+        <form class="panel operation-panel" method="post" action="{{ url_for('admin_stats') }}">
+          <h2>نمایش آمار کاربر</h2>
+          <label><span>آیدی کاربر</span><input name="tg_id" inputmode="numeric" required></label>
+          <label>
+            <span>ماه گزارش</span>
+            <select name="month_year" required>
+              {% for month, year in available_stats %}
+                <option value="{{ month }}|{{ year }}" {{ 'selected' if stats_month_year == (month ~ '|' ~ year) else '' }}>{{ month }} {{ year }}</option>
+              {% else %}
+                <option value="">آماری موجود نیست</option>
+              {% endfor %}
+            </select>
+          </label>
+          <button class="secondary">نمایش آمار</button>
+        </form>
+
+        <form class="panel operation-panel" method="get" action="{{ url_for('admin') }}">
+          <input type="hidden" name="tab" value="reports">
+          <h2>چک انتقال اعتبار</h2>
+          <label><span>آیدی عددی کاربر</span><input name="transfer_tg_id" value="{{ transfer_tg_id or '' }}" inputmode="numeric" required></label>
+          <button class="secondary">نمایش تاریخچه</button>
+        </form>
+
+        {% if stats_result %}
+          <article class="panel operation-panel">
+            <h2>نتیجه آمار</h2>
+            <p class="hint">آیدی: {{ stats_result.tg_id }}</p>
+            <p class="hint">تعداد کل کانفیگ‌ها: {{ stats_result.configs }}</p>
+            <p class="hint">کانفیگ‌های فعال: {{ stats_result.active_configs }}</p>
+            <p class="hint">موجودی فعلی: {{ stats_result.balance }} گیگ</p>
+            <p class="hint">اعتبار دریافتی این ماه: {{ stats_result.received_balance }} گیگ</p>
+            <p class="hint">اعتبار ارسالی این ماه: {{ stats_result.sent_balance }} گیگ</p>
+          </article>
+        {% endif %}
+      </section>
+
+      <section class="table-panel">
+        <h2>کاربران</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>آیدی تلگرام</th><th>موجودی</th><th>رفرال</th><th>تعداد کانفیگ</th></tr></thead>
+            <tbody>
+              {% for item in users %}
+                <tr>
+                  <td>{{ item.tg_id }}</td>
+                  <td>{{ item.balance }}</td>
+                  <td>{{ item.purchases }}</td>
+                  <td>{{ item.subscriptions|length }}</td>
+                </tr>
+              {% else %}
+                <tr><td colspan="4" class="empty">کاربری وجود ندارد.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="table-panel">
+        <div class="section-head">
+          <h2>آمار انتقال اعتبار</h2>
+          <p class="hint">
+            تعداد انتقال: {{ balance_transfer_stats.count }} |
+            حجم کل: {{ balance_transfer_stats.gigabytes }} گیگ |
+            فرستنده‌ها: {{ balance_transfer_stats.senders }} |
+            گیرنده‌ها: {{ balance_transfer_stats.receivers }}
+          </p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>فرستنده</th><th>تعداد انتقال</th><th>حجم کل</th></tr></thead>
+            <tbody>
+              {% for item in balance_transfer_user_stats %}
+                <tr>
+                  <td>{{ item.source_tg_id }}</td>
+                  <td>{{ item.count }}</td>
+                  <td>{{ item.gigabytes }} گیگ</td>
+                </tr>
+              {% else %}
+                <tr><td colspan="3" class="empty">آماری برای انتقال اعتبار وجود ندارد.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      
+      <section class="table-panel">
+        <h2>تاریخچه کامل انتقال اعتبار</h2>
+        {% if transfer_tg_id %}
+          <p class="hint">فقط انتقال‌های مربوط به آیدی {{ transfer_tg_id }} نمایش داده می‌شود.</p>
+        {% else %}
+          <p class="hint">برای نمایش تاریخچه، آیدی عددی کاربر را در کادر چک انتقال اعتبار وارد کنید.</p>
+        {% endif %}
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>زمان</th><th>از آیدی</th><th>به آیدی</th><th>حجم</th></tr></thead>
+            <tbody>
+              {% for item in transfer_history %}
+                <tr>
+                  <td>{{ item.created_at or '-' }}</td>
+                  <td>{{ item.source_tg_id }}</td>
+                  <td>{{ item.destination_tg_id }}</td>
+                  <td>{{ item.gigabytes }} گیگ</td>
+                </tr>
+              {% else %}
+                <tr><td colspan="4" class="empty">انتقال اعتباری ثبت نشده است.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      {% endif %}
+    {% endif %}
+  </main>
+  <script>
+    (() => {
+      const body = document.body;
+      const toggle = document.querySelector("[data-sidebar-toggle]");
+      const close = document.querySelector("[data-sidebar-close]");
+      const links = document.querySelectorAll(".sidebar a");
+      const setOpen = (open) => body.classList.toggle("sidebar-open", open);
+      if (toggle) toggle.addEventListener("click", () => setOpen(!body.classList.contains("sidebar-open")));
+      if (close) close.addEventListener("click", () => setOpen(false));
+      links.forEach((link) => link.addEventListener("click", () => setOpen(false)));
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") setOpen(false);
+      });
+    })();
+  </script>
+  {% if view == 'dashboard' %}
+    <script>
+      (() => {
+        const form = document.querySelector("[data-charge-form]");
+        if (!form) return;
+        const pricingMode = form.dataset.pricingMode || "range";
+        const ranges = JSON.parse(form.dataset.priceRanges || "[]").map(Number);
+        const prices = JSON.parse(form.dataset.priceValues || "[]").map(Number);
+        const fixedPrices = JSON.parse(form.dataset.fixedPrices || "{}");
+        const labels = {
+          bnb: "BNB",
+          trx: "TRX",
+          usdt_trc20: "USDT TRC20",
+          usdt_bep20: "USDT BEP20",
+        };
+        let cryptoPrices = {{ (crypto_prices.prices or {})|tojson }};
+        const gigabytes = form.querySelector("[data-charge-gigabytes]");
+        const asset = form.querySelector("[data-crypto-asset]");
+        const quote = form.querySelector("[data-crypto-quote]");
+        const tomanPriceFor = (gb) => {
+          if (pricingMode === "fixed") {
+            return Number(fixedPrices[String(gb)] || fixedPrices[gb] || 0);
+          }
+          if (!prices.length || !gb || gb < 1) return 0;
+          for (let i = 0; i < ranges.length; i += 1) {
+            if (gb < Number(ranges[i])) return Number(prices[i] || 0) * gb;
+          }
+          return Number(prices[prices.length - 1] || 0) * gb;
+        };
+        const format = (value, digits = 0) => {
+          const number = Number(value || 0);
+          return number.toLocaleString("fa-IR", { maximumFractionDigits: digits, minimumFractionDigits: digits });
+        };
+        const updateRateList = () => {
+          document.querySelectorAll("[data-crypto-rate]").forEach((row) => {
+            const key = row.dataset.cryptoRate;
+            const target = row.querySelector("[data-rate-value]");
+            const price = Number(cryptoPrices[key] || 0);
+            if (target) target.textContent = price ? `قیمت: ${format(price)} ریال` : "قیمت: در حال دریافت";
+          });
+        };
+        const applyPricePayload = (payload) => {
+          if (payload && payload.prices) {
+            cryptoPrices = payload.prices;
+            updateRateList();
+            updateQuote();
+          }
+        };
+        const updateQuote = () => {
+          const gb = Number(gigabytes && gigabytes.value ? gigabytes.value : 0);
+          const selected = asset ? asset.value : "bnb";
+          const priceToman = tomanPriceFor(gb);
+          const priceIrr = Number(cryptoPrices[selected] || 0);
+          if (!quote) return;
+          if (!gb || gb < 1) {
+            quote.textContent = "برای محاسبه مقدار ارز، حجم را وارد کنید.";
+            return;
+          }
+          if (!priceToman) {
+            quote.textContent = "برای این حجم، قیمت تعریف نشده است.";
+            return;
+          }
+          if (!priceIrr) {
+            quote.textContent = "قیمت لحظه‌ای این ارز هنوز دریافت نشده است.";
+            return;
+          }
+          const amountIrr = priceToman * 10;
+          const cryptoAmount = amountIrr / priceIrr;
+          quote.textContent = `مبلغ ${format(priceToman)} تومان برابر ${format(amountIrr)} ریال است؛ مقدار پرداخت: ${format(cryptoAmount, 8)} ${labels[selected] || selected}`;
+        };
+        const refreshPrices = async () => {
+          try {
+            const response = await fetch("{{ url_for('crypto_prices_json') }}", { credentials: "same-origin" });
+            const payload = await response.json();
+            applyPricePayload(payload);
+          } catch (_error) {}
+        };
+        const connectPriceSocket = () => {
+          try {
+            const scheme = window.location.protocol === "https:" ? "wss" : "ws";
+            const socket = new WebSocket(`${scheme}://${window.location.host}/crypto/prices.ws`);
+            socket.addEventListener("message", (event) => {
+              try {
+                applyPricePayload(JSON.parse(event.data));
+              } catch (_error) {}
+            });
+            socket.addEventListener("close", () => {
+              setTimeout(connectPriceSocket, 5000);
+            });
+            socket.addEventListener("error", () => {
+              socket.close();
+            });
+          } catch (_error) {
+            setTimeout(connectPriceSocket, 5000);
+          }
+        };
+        if (gigabytes) gigabytes.addEventListener("input", updateQuote);
+        if (asset) asset.addEventListener("change", updateQuote);
+        updateRateList();
+        updateQuote();
+        refreshPrices();
+        setInterval(refreshPrices, 20000);
+        connectPriceSocket();
+      })();
+    </script>
+  {% endif %}
+  {% if view == 'admin' %}
+    <script>
+      (() => {
+        const setupInboundPicker = () => {
+          const picker = document.querySelector("[data-inbound-picker]");
+          if (!picker) return;
+          const form = picker.closest("form");
+          const discoverButton = picker.querySelector("[data-discover-inbounds]");
+          const select = picker.querySelector("[data-inbound-select]");
+          const message = picker.querySelector("[data-inbound-message]");
+          const existingMode = picker.querySelector('input[name="inbound_mode"][value="existing"]');
+          const createMode = picker.querySelector('input[name="inbound_mode"][value="create"]');
+          const manualInbound = form.querySelector('input[name="inbound_id"]');
+          const port = form.querySelector('input[name="port"]');
+          const setMode = () => {
+            const existing = existingMode && existingMode.checked;
+            if (select) select.disabled = !existing;
+            if (manualInbound) manualInbound.value = existing ? (select.value || manualInbound.value || "0") : "0";
+            if (port) port.required = !existing;
+          };
+          [existingMode, createMode].forEach((item) => item && item.addEventListener("change", setMode));
+          if (select) {
+            select.addEventListener("change", () => {
+              if (existingMode) existingMode.checked = true;
+              if (manualInbound) manualInbound.value = select.value || "0";
+              setMode();
+            });
+          }
+          if (discoverButton) {
+            discoverButton.addEventListener("click", async () => {
+              const formData = new FormData();
+              ["domain", "username", "password"].forEach((name) => {
+                const input = form.querySelector(`[name="${name}"]`);
+                formData.append(name, input ? input.value : "");
+              });
+              discoverButton.disabled = true;
+              if (message) message.textContent = "در حال خواندن inboundها از 3x-ui...";
+              try {
+                const response = await fetch("{{ url_for('admin_discover_inbounds') }}", {
+                  method: "POST",
+                  body: formData,
+                  credentials: "same-origin",
+                });
+                const payload = await response.json();
+                if (!response.ok || !payload.ok) throw new Error(payload.message || "خواندن inboundها ناموفق بود.");
+                select.innerHTML = "";
+                if (!payload.inbounds.length) {
+                  const option = document.createElement("option");
+                  option.value = "";
+                  option.textContent = "روی این سرور inbound موجود نیست";
+                  select.appendChild(option);
+                  if (createMode) createMode.checked = true;
+                  if (message) message.textContent = "inbound موجود پیدا نشد؛ برای این سرور باید inbound جدید بسازید.";
+                } else {
+                  payload.inbounds.forEach((item) => {
+                    const option = document.createElement("option");
+                    option.value = item.id;
+                    option.textContent = `#${item.id} | ${item.remark} | ${item.protocol}/${item.network}/${item.security} | port ${item.port} | clients ${item.clients}`;
+                    select.appendChild(option);
+                  });
+                  if (existingMode) existingMode.checked = true;
+                  if (manualInbound) manualInbound.value = select.value || "0";
+                  if (message) message.textContent = "inbound موجود انتخاب شد؛ تنظیمات کامل هنگام ثبت از خود 3x-ui خوانده و ذخیره می‌شود.";
+                }
+              } catch (error) {
+                if (message) message.textContent = error.message || "خطا در خواندن inboundها.";
+              } finally {
+                discoverButton.disabled = false;
+                setMode();
+              }
+            });
+          }
+          setMode();
+        };
+        setupInboundPicker();
+        const format = (value, digits = 1) => Number(value || 0).toFixed(digits);
+        const setMeter = (row, metric, value) => {
+          const el = row.querySelector(`[data-metric="${metric}"]`);
+          if (!el) return;
+          const number = Number(value || 0);
+          const meter = el.querySelector("meter");
+          const label = el.querySelector("b");
+          if (meter) meter.value = number;
+          if (label) label.textContent = `${Math.round(number)}%`;
+        };
+        const applyStatus = (row, status) => {
+          if (!status || !status.ok) return;
+          setMeter(row, "cpu", status.cpu);
+          setMeter(row, "mem", status.mem_percent);
+          setMeter(row, "disk", status.disk_percent);
+          const detail = row.querySelector("[data-resource-detail]");
+          if (detail) detail.textContent = `RAM ${format(status.mem_current)}/${format(status.mem_total)} GiB · Disk ${format(status.disk_current)}/${format(status.disk_total)} GiB`;
+          const up = row.querySelector("[data-net-up]");
+          const down = row.querySelector("[data-net-down]");
+          const total = row.querySelector("[data-net-total]");
+          if (up) up.textContent = `Up ${format(status.net_up, 3)} GiB`;
+          if (down) down.textContent = `Down ${format(status.net_down, 3)} GiB`;
+          if (total) total.textContent = `Total ${format(status.traffic_up)} / ${format(status.traffic_down)} GiB`;
+          const xray = row.querySelector("[data-xray-state]");
+          if (xray) {
+            const running = status.xray_state === true || status.xray_state === "running";
+            xray.textContent = running ? "روشن" : "خاموش";
+            xray.classList.toggle("ok", running);
+            xray.classList.toggle("off", !running);
+          }
+          const version = row.querySelector("[data-xray-version]");
+          if (version) version.textContent = status.xray_version || "-";
+        };
+        let fallbackTimer = null;
+        const refresh = async () => {
+          try {
+            const response = await fetch("{{ url_for('admin_server_status_json') }}", { credentials: "same-origin" });
+            const payload = await response.json();
+            Object.entries(payload.servers || {}).forEach(([id, status]) => {
+              const row = document.querySelector(`[data-server-row="${id}"]`);
+              if (row) applyStatus(row, status);
+            });
+          } catch (_error) {}
+        };
+        const startFallback = () => {
+          if (fallbackTimer) return;
+          fallbackTimer = setInterval(refresh, 5000);
+          refresh();
+        };
+        const connectSocket = () => {
+          const scheme = window.location.protocol === "https:" ? "wss" : "ws";
+          const socket = new WebSocket(`${scheme}://${window.location.host}/admin/servers/status.ws`);
+          socket.addEventListener("message", (event) => {
+            try {
+              const payload = JSON.parse(event.data);
+              Object.entries(payload.servers || {}).forEach(([id, status]) => {
+                const row = document.querySelector(`[data-server-row="${id}"]`);
+                if (row) applyStatus(row, status);
+              });
+            } catch (_error) {}
+          });
+          socket.addEventListener("close", () => {
+            setTimeout(connectSocket, 3000);
+            startFallback();
+          });
+          socket.addEventListener("error", () => {
+            socket.close();
+          });
+        };
+        connectSocket();
+      })();
+    </script>
+  {% endif %}
+</body>
+</html>
