@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ورود پنل 3x-ui Pro Panel Devaloper Rogerpick</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='web_panel.css') }}">
+</head>
+<body class="auth-body">
+  <main class="auth-shell">
+    <section class="auth-panel">
+      <div class="brand-mark">3X</div>
+      <h1>پنل وب 3x-ui Pro Panel Devaloper Rogerpick</h1>
+      <p>با همان آیدی عددی تلگرام وارد شوید تا اطلاعات حساب، سرویس‌ها و سطح دسترسی‌تان از دیتابیس مشترک خوانده شود.</p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-stack">
+            {% for category, message in messages %}
+              <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <form method="post" class="form-grid">
+        <label>
+          <span>آیدی عددی تلگرام</span>
+          <input name="tg_id" inputmode="numeric" autocomplete="username" required>
+        </label>
+        <label>
+          <span>پسورد وب</span>
+          <input name="password" type="password" autocomplete="current-password" required>
+        </label>
+        <button class="primary" type="submit">ورود به پنل</button>
+      </form>
+    </section>
+  </main>
+</body>
+</html>
