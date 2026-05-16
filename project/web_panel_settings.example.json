@@ -1,0 +1,46 @@
+{
+  "panel_secret": "change-this-secret",
+  "database_url": "mysql+pymysql://farbod:farbod@localhost/mydatabase",
+  "admin_web_password": "change-this-admin-password",
+  "bot_domain": "https://example.com",
+  "bot_token": "",
+  "telegram_proxy_url": "",
+  "xui_two_factor_code": "",
+  "support_link": "https://t.me/example_support",
+  "primary_owner_chat_id": 0,
+  "main_admin_chat_ids": [],
+  "admin_chat_ids": [],
+  "channels": [],
+  "card_num": "0000-0000-0000-0000",
+  "crypto_wallets": {
+    "bnb": "",
+    "trx": "",
+    "usdt_trc20": "",
+    "usdt_bep20": ""
+  },
+  "referral_percent": 20,
+  "referral_rate": 500,
+  "pricing_mode": "range",
+  "ranges": [
+    50,
+    100,
+    500
+  ],
+  "prices": [
+    2000,
+    1800,
+    1500,
+    1200
+  ],
+  "fixed_prices": {
+    "1": 350000,
+    "2": 750000,
+    "3": 1050000,
+    "4": 1400000,
+    "5": 1750000,
+    "10": 3500000
+  },
+  "payment_channel_chat_id": "",
+  "xray_auto_restart": {},
+  "web_banner_path": ""
+}
