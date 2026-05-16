@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Local virtualenv / tooling
+project/.venv/
+.pytest_cache/
+.mypy_cache/
+
+# Runtime state
+setup_wizard.log
+project/config.log
+project/config.json
+project/bot_panel.db
+project/web_panel_settings.json
+project/runtime/
+project/logs/
+project/static/payment_receipts/
+xray/runtime/config.json
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
