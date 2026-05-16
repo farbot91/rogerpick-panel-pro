@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ subscription.name }} - اطلاعات کانفیگ</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='web_panel.css') }}">
+</head>
+<body class="public-body">
+  {% set used_percent = (details.used * 100 / subscription.gigabytes) if subscription.gigabytes else 0 %}
+  {% set all_links = details.links|join('\n') if details.links else '' %}
+  <main class="public-shell config-page">
+    <header class="public-hero">
+      <div class="public-hero-copy">
+        <p class="eyebrow">اطلاعات سرویس</p>
+        <h1>{{ subscription.name }}</h1>
+        <p>لینک‌های اتصال، QR کد و وضعیت مصرف این سرویس در همین صفحه به‌روز نمایش داده می‌شود.</p>
+      </div>
+      <div class="public-hero-status">
+        <span class="status {{ 'ok' if subscription.is_active else 'off' }}">{{ 'فعال' if subscription.is_active else 'غیرفعال' }}</span>
+        {% if not details.traffic_ok %}
+          <small>مصرف همه سرورها کامل خوانده نشد.</small>
+        {% else %}
+          <small>وضعیت مصرف با موفقیت خوانده شد.</small>
+        {% endif %}
+      </div>
+    </header>
+
+    {% if web_banner_path %}
+      <section class="global-banner">
+        <img src="{{ url_for('static', filename=web_banner_path) }}" alt="بنر پنل">
+      </section>
+    {% endif %}
+
+    <section class="public-overview">
+      <article class="public-meter-card">
+        <div>
+          <span>مصرف کل</span>
+          <strong>{{ "%.1f"|format(used_percent) }}%</strong>
+        </div>
+        <meter min="0" max="100" value="{{ used_percent }}"></meter>
+        <small>{{ "%.2f"|format(details.used) }} از {{ subscription.gigabytes }} گیگابایت مصرف شده است.</small>
+      </article>
+      <article class="metric public-metric">
+        <span>حجم کل</span>
+        <strong>{{ subscription.gigabytes }}</strong>
+        <small>گیگابایت</small>
+      </article>
+      <article class="metric public-metric">
+        <span>مصرف‌شده</span>
+        <strong>{{ "%.2f"|format(details.used) }}</strong>
+        <small>گیگابایت</small>
+      </article>
+      <article class="metric public-metric">
+        <span>باقی‌مانده</span>
+        <strong>{{ "%.2f"|format(details.remain) }}</strong>
+        <small>گیگابایت</small>
+      </article>
+    </section>
+
+    <section class="config-card">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Connection Links</p>
+          <h2>لینک‌های اتصال</h2>
+        </div>
+        <span class="status ok">{{ details.links|length }} لینک</span>
+      </div>
+
+      {% if details.links %}
+        <article class="config-copy-card">
+          <div class="qr-panel">
+            <div class="qr-code" data-qr-text="{{ all_links|e }}"></div>
+            <small>یک QR برای همه لینک‌ها</small>
+          </div>
+          <div class="link-panel">
+            <label>
+              <span>همه لینک‌ها</span>
+              <textarea readonly>{{ all_links }}</textarea>
+            </label>
+            <div class="link-list">
+              {% for link in details.links %}
+                <code>{{ link }}</code>
+              {% endfor %}
+            </div>
+          </div>
+        </article>
+      {% else %}
+        <p class="empty">لینکی برای این کانفیگ ثبت نشده است.</p>
+      {% endif %}
+    </section>
+  </main>
+  <script src="{{ url_for('static', filename='vendor/qrcode.min.js') }}"></script>
+  <script>
+    (() => {
+      document.querySelectorAll("[data-qr-text]").forEach((target) => {
+        const text = target.dataset.qrText || "";
+        if (!text || typeof qrcode !== "function") return;
+        try {
+          const qr = qrcode(0, "M");
+          qr.addData(text);
+          qr.make();
+          target.innerHTML = qr.createImgTag(6, 12, "QR");
+        } catch (error) {
+          target.textContent = "QR برای این حجم لینک قابل ساخت نیست.";
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
